@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pomodoro Clock</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      width: 220px;
+      height: 460px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    .time-display {
+      font-size: 2em;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section span {
+      font-size: 1.2em;
+    }
+    button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-control {
+      font-size: 18px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: white;
+      color: black;
+    }
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .start {
+      background: green;
+      color: white;
+    }
+    .reset {
+      background: red;
+      color: white;
+    }
+    .disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Countdown Display -->
+    <div class="time-display" id="time">25:00</div>
+
+    <!-- Controls Section -->
+    <div class="controls">
+      <div class="section">
+        <span>Session:</span>
+        <div>
+          <button class="btn-control" id="session-decrease">-</button>
+          <span id="session-length">25</span>
+          <button class="btn-control" id="session-increase">+</button>
+        </div>
+      </div>
+      <div class="section">
+        <span>Break:</span>
+        <div>
+          <button class="btn-control" id="break-decrease">-</button>
+          <span id="break-length">5</span>
+          <button class="btn-control" id="break-increase">+</button>
+        </div>
+      </div>
+      <div class="bottom-buttons">
+        <button class="start" id="start">Start</button>
+        <button class="reset" id="reset">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sessionLength = 25;
+    let breakLength = 5;
+    let timeLeft = sessionLength * 60;
+    let timer = null;
+    let isRunning = false;
+    let isSession = true;
+
+    const timeDisplay = document.getElementById("time");
+    const sessionSpan = document.getElementById("session-length");
+    const breakSpan = document.getElementById("break-length");
+    const startBtn = document.getElementById("start");
+    const resetBtn = document.getElementById("reset");
+
+    function updateDisplay() {
+      let minutes = Math.floor(timeLeft / 60);
+      let seconds = timeLeft % 60;
+      timeDisplay.textContent = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      disableControls(true);
+      timer = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          isSession = !isSession;
+          timeLeft = (isSession ? sessionLength : breakLength) * 60;
+          startTimer();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timer);
+      isRunning = false;
+      disableControls(false);
+    }
+
+    function disableControls(state) {
+      document.querySelectorAll(".btn-control").forEach(btn => {
+        btn.classList.toggle("disabled", state);
+      });
+    }
+
+    // Event Listeners
+    document.getElementById("session-increase").onclick = () => {
+      if (!isRunning) {
+        sessionLength++;
+        sessionSpan.textContent = sessionLength;
+        timeLeft = sessionLength * 60;
+        updateDisplay();
+      }
+    };
+    document.getElementById("session-decrease").onclick = () => {
+      if (!isRunning && sessionLength > 0) {
+        sessionLength--;
+        sessionSpan.textContent = sessionLength;
+        timeLeft = sessionLength * 60;
+        updateDisplay();
+      }
+    };
+    document.getElementById("break-increase").onclick = () => {
+      if (!isRunning) {
+        breakLength++;
+        breakSpan.textContent = breakLength;
+      }
+    };
+    document.getElementById("break-decrease").onclick = () => {
+      if (!isRunning && breakLength > 0) {
+        breakLength--;
+        breakSpan.textContent = breakLength;
+      }
+    };
+
+    startBtn.onclick = () => {
+      if (!isRunning) {
+        startBtn.textContent = "Stop";
+        startBtn.style.background = "red";
+        startTimer();
+      } else {
+        startBtn.textContent = "Start";
+        startBtn.style.background = "green";
+        stopTimer();
+      }
+    };
+
+    resetBtn.onclick = () => {
+      stopTimer();
+      sessionLength = 25;
+      breakLength = 5;
+      timeLeft = sessionLength * 60;
+      isSession = true;
+      sessionSpan.textContent = sessionLength;
+      breakSpan.textContent = breakLength;
+      startBtn.textContent = "Start";
+      startBtn.style.background = "green";
+      updateDisplay();
+    };
+
+    updateDisplay();
+  </script>
+</body>
+</html>
